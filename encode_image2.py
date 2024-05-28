@@ -13,6 +13,9 @@ from tensorflow.python.saved_model import signature_constants
 BCH_POLYNOMIAL = 137
 BCH_BITS = 5
 
+# BCH_POLYNOMIAL = 8219
+# BCH_BITS = 13
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
@@ -50,8 +53,8 @@ def main():
     height = 400
 
     # zoe
-    #bch = bchlib.BCH(BCH_POLYNOMIAL, BCH_BITS)
-    bch = bchlib.BCH(BCH_BITS, BCH_POLYNOMIAL)
+    bch = bchlib.BCH(BCH_POLYNOMIAL, BCH_BITS)
+    # bch = bchlib.BCH(BCH_BITS, BCH_POLYNOMIAL)
 
 
     if len(args.secret) > 7:
