@@ -15,7 +15,7 @@ tf.compat.v1.disable_v2_behavior()
 
 
 
-TRAIN_PATH = 'stamp_images/images'
+TRAIN_PATH = './images'
 LOGS_Path = "./logs/"
 CHECKPOINTS_PATH = './checkpoints/'
 SAVED_MODELS = './saved_models'
@@ -214,6 +214,7 @@ def main():
             if global_step % 10000 ==0:
                 save_path = saver.save(sess, join(CHECKPOINTS_PATH,EXP_NAME,EXP_NAME+".chkp"), global_step=global_step)
 
+    print("🦖"*40)
     constant_graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(
             sess,
             sess.graph.as_graph_def(),

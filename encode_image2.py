@@ -1,9 +1,12 @@
 import bchlib
 import glob
 import os
-from PIL import Image, ImageOps
+from PIL import Image,ImageOps
 import numpy as np
 import tensorflow as tf
+# zoe
+#import tensorflow.contrib.image
+import tensorflow_addons as tfa
 from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.saved_model import signature_constants
 
@@ -19,6 +22,7 @@ def main():
     parser.add_argument('--save_dir', type=str, default=None)
     parser.add_argument('--secret', type=str, default='Stega!!')
     args = parser.parse_args()
+    print(f'args:{args}')
 
     if args.image is not None:
         files_list = [args.image]
@@ -45,28 +49,25 @@ def main():
     width = 400
     height = 400
 
-    try:
-        bch = bchlib.BCH(BCH_POLYNOMIAL, BCH_BITS)
-    except Exception as e:
-        print(f"BCH 초기화 실패: {e}")
-        return
+    # zoe
+    #bch = bchlib.BCH(BCH_POLYNOMIAL, BCH_BITS)
+    bch = bchlib.BCH(BCH_BITS, BCH_POLYNOMIAL)
+
 
     if len(args.secret) > 7:
         print('Error: Can only encode 56bits (7 characters) with ECC')
         return
 
-    data = bytearray(args.secret + ' ' * (7 - len(args.secret)), 'utf-8')
+    data = bytearray(args.secret + ' '*(7-len(args.secret)), 'utf-8')
+    print(f'data:{data}')
     ecc = bch.encode(data)
+    print(f'ecc:{ecc}')
     packet = data + ecc
+    print(f'packet:{packet}')
 
     packet_binary = ''.join(format(x, '08b') for x in packet)
     secret = [int(x) for x in packet_binary]
-
-    # 입력 데이터의 길이를 100으로 맞춤
-    if len(secret) < 100:
-        secret.extend([0] * (100 - len(secret)))  # 패딩
-    elif len(secret) > 100:
-        secret = secret[:100]  # 자르기
+    secret.extend([0,0,0,0])
 
     if args.save_dir is not None:
         if not os.path.exists(args.save_dir):
@@ -74,27 +75,27 @@ def main():
         size = (width, height)
         for filename in files_list:
             image = Image.open(filename).convert("RGB")
-            image = np.array(ImageOps.fit(image, size), dtype=np.float32)
+            image = np.array(ImageOps.fit(image,size),dtype=np.float32)
             image /= 255.
 
-            feed_dict = {input_secret: [secret],
-                         input_image: [image]}
+            feed_dict = {input_secret:[secret],
+                         input_image:[image]}
 
-            hidden_img, residual = sess.run([output_stegastamp, output_residual], feed_dict=feed_dict)
+            hidden_img, residual = sess.run([output_stegastamp, output_residual],feed_dict=feed_dict)
 
             rescaled = (hidden_img[0] * 255).astype(np.uint8)
             raw_img = (image * 255).astype(np.uint8)
-            residual = residual[0] + .5
+            residual = residual[0]+.5
 
             residual = (residual * 255).astype(np.uint8)
 
             save_name = filename.split('/')[-1].split('.')[0]
 
             im = Image.fromarray(np.array(rescaled))
-            im.save(args.save_dir + '/' + save_name + '_hidden.png')
+            im.save(args.save_dir + '/'+save_name+'_hidden.png')
 
             im = Image.fromarray(np.squeeze(np.array(residual)))
-            im.save(args.save_dir + '/' + save_name + '_residual.png')
+            im.save(args.save_dir + '/'+save_name+'_residual.png')
 
 if __name__ == "__main__":
     main()
